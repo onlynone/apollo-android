@@ -113,7 +113,9 @@ public final class RealSubscriptionManager implements SubscriptionManager {
   /**
    * Unsubscribe from all active subscriptions, and disconnect the web socket.  It will not be
    * possible to add new subscriptions while the {@link SubscriptionManager} is stopping
-   * because we check the state in {@link #doSubscribe(Subscription, Callback)}
+   * because we check the state in {@link #doSubscribe(Subscription, Callback)}.  We pass true to
+   * {@link #disconnect(boolean)} because we want to disconnect even if, somehow, a new subscription
+   * is added while or after we are doing the {@link #doUnsubscribe(Subscription)} loop.
    */
   @Override
   public void stop() {
@@ -122,7 +124,6 @@ public final class RealSubscriptionManager implements SubscriptionManager {
       doUnsubscribe(eachSubscriptionRecord.subscription);
     }
     disconnect(true);
-    setStateAndNotify(State.STOPPED);
   }
 
   public void addOnStateChangeListener(@NotNull OnStateChangeListener onStateChangeListener) {
@@ -229,11 +230,20 @@ public final class RealSubscriptionManager implements SubscriptionManager {
     }
   }
 
+  /**
+   * Disconnect the web socket and update the state.  If we are stopping, set the state to
+   * {@link State#STOPPED} so that new subscription requests will <b>not</b> automatically re-open
+   * the web socket.  If we are not stopping, set the state to {@link State#DISCONNECTED} so that
+   * new subscription requests <b>will</b> automatically re-open the web socket.
+   *
+   * @param force if true, always disconnect web socket, regardless of the status of {@link #subscriptions}
+   */
   void disconnect(boolean force) {
     synchronized (this) {
       if (force || subscriptions.isEmpty()) {
         transport.disconnect(new OperationClientMessage.Terminate());
-        setStateAndNotify(State.DISCONNECTED);
+        State disconnectionState = (state == State.STOPPING) ? State.STOPPED : State.DISCONNECTED;
+        setStateAndNotify(disconnectionState);
         subscriptions = new LinkedHashMap<>();
       }
     }
