@@ -155,14 +155,14 @@ public final class ApolloClient implements ApolloQueryCall.Factory, ApolloMutati
   /**
    * Set {@link SubscriptionManager} to a connectible state.
    */
-  public void startSubscriptions() {
+  public void enableSubscriptions() {
     subscriptionManager.start();
   }
 
   /**
    * Unsubscribe from all active subscriptions, and disconnect the web socket.
    */
-  public void stopSubscriptions() {
+  public void disableSubscriptions() {
     subscriptionManager.stop();
   }
 
