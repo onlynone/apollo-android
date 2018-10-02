@@ -156,7 +156,9 @@ public class GitHuntEntryDetailActivity extends AppCompatActivity {
   }
 
   private void subscribeRepoCommentAdded() {
-    ApolloSubscriptionCall<RepoCommentAddedSubscription.Data> subscriptionCall = application.apolloClient()
+    ApolloClient apolloClient = application.apolloClient();
+    apolloClient.enableSubscriptions();
+    ApolloSubscriptionCall<RepoCommentAddedSubscription.Data> subscriptionCall = apolloClient
         .subscribe(new RepoCommentAddedSubscription(repoFullName));
 
     disposables.add(Rx2Apollo.from(subscriptionCall)
